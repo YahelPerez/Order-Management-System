@@ -1,0 +1,22 @@
+﻿# Configuration for the 'test' profile, automatically activated during tests.
+spring:
+  # H2 Database Configuration for tests
+  datasource:
+    # We use a different database name to ensure test data is isolated from development data.
+    url: jdbc:h2:mem:testdb
+    driverClassName: org.h2.Driver
+    username: sa
+    password: ""
+
+  # JPA (Hibernate) Configuration for tests
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    # 'create-drop' creates the schema at the start of the tests and drops it at the end.
+    # This ensures every test run starts with a clean slate.
+    hibernate:
+      ddl-auto: create-drop
+
+  # We don't need the H2 console when running automated tests.
+  h2:
+    console:
+      enabled: false

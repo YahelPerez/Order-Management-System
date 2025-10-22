@@ -2,6 +2,12 @@ package com.meli.ordermanagement.controller;
 
 import com.meli.ordermanagement.model.Order;
 import com.meli.ordermanagement.service.OrderService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,76 +17,83 @@ import java.util.List;
 
 /**
  * REST Controller for managing orders.
- * This class exposes a set of endpoints to perform CRUD operations on orders.
  */
 @RestController
-@RequestMapping("/api/orders") // Base URL for all endpoints in this controller
+@RequestMapping("/api/orders")
 public class OrderController {
 
     @Autowired
     private OrderService orderService;
 
-    /**
-     * Endpoint to get all orders.
-     * HTTP GET /api/orders
-     * @return a list of all orders.
-     */
+    @Operation(summary = "Get all orders", description = "Retrieves a complete list of all orders stored in the database.")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved the list of orders")
     @GetMapping
     public List<Order> getAllOrders() {
         return orderService.getAllOrders();
     }
 
-    /**
-     * Endpoint to get a single order by its ID.
-     * HTTP GET /api/orders/{id}
-     * @param id The ID of the order.
-     * @return a ResponseEntity containing the order if found, or a 404 Not Found status.
-     */
+    @Operation(summary = "Get an order by ID", description = "Retrieves the details of a specific order using its unique ID.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully found the order",
+                    content = { @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Order.class)) }),
+            @ApiResponse(responseCode = "404", description = "Order not found with the provided ID",
+                    content = @Content)
+    })
     @GetMapping("/{id}")
-    public ResponseEntity<Order> getOrderById(@PathVariable Long id) {
+    public ResponseEntity<Order> getOrderById(
+            @Parameter(description = "ID of the order to be retrieved") @PathVariable Long id) {
         return orderService.getOrderById(id)
-                .map(ResponseEntity::ok) // If order is present, return 200 OK with the order
-                .orElse(ResponseEntity.notFound().build()); // Otherwise, return 404 Not Found
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    /**
-     * Endpoint to create a new order.
-     * HTTP POST /api/orders
-     * @param order The order data from the request body.
-     * @return a ResponseEntity with the created order and a 201 Created status.
-     */
+    @Operation(summary = "Create a new order", description = "Creates and saves a new order in the database.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Order created successfully",
+                    content = { @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Order.class)) }),
+            @ApiResponse(responseCode = "400", description = "Invalid input data",
+                    content = @Content)
+    })
     @PostMapping
-    public ResponseEntity<Order> createOrder(@RequestBody Order order) {
+    public ResponseEntity<Order> createOrder(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "The Order object to be created") @RequestBody Order order) {
         Order createdOrder = orderService.createOrder(order);
         return new ResponseEntity<>(createdOrder, HttpStatus.CREATED);
     }
 
-    /**
-     * Endpoint to update an existing order.
-     * HTTP PUT /api/orders/{id}
-     * @param id The ID of the order to update.
-     * @param orderDetails The new order data from the request body.
-     * @return a ResponseEntity with the updated order or a 404 Not Found status.
-     */
+    @Operation(summary = "Update an existing order", description = "Updates the details of an existing order by its ID.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Order updated successfully",
+                    content = { @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Order.class)) }),
+            @ApiResponse(responseCode = "404", description = "Order not found with the provided ID",
+                    content = @Content)
+    })
     @PutMapping("/{id}")
-    public ResponseEntity<Order> updateOrder(@PathVariable Long id, @RequestBody Order orderDetails) {
+    public ResponseEntity<Order> updateOrder(
+            @Parameter(description = "ID of the order to be updated") @PathVariable Long id,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "The new details for the order") @RequestBody Order orderDetails) {
         return orderService.updateOrder(id, orderDetails)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    /**
-     * Endpoint to delete an order.
-     * HTTP DELETE /api/orders/{id}
-     * @param id The ID of the order to delete.
-     * @return a ResponseEntity with a 204 No Content status if successful, or 404 Not Found.
-     */
+    @Operation(summary = "Delete an order", description = "Deletes an order from the database by its ID.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Order deleted successfully",
+                    content = @Content),
+            @ApiResponse(responseCode = "404", description = "Order not found with the provided ID",
+                    content = @Content)
+    })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteOrder(
+            @Parameter(description = "ID of the order to be deleted") @PathVariable Long id) {
         if (orderService.deleteOrder(id)) {
-            return ResponseEntity.noContent().build(); // Return 204 No Content on successful deletion
+            return ResponseEntity.noContent().build();
         } else {
-            return ResponseEntity.notFound().build(); // Return 404 Not Found if the order didn't exist
+            return ResponseEntity.notFound().build();
         }
     }
 }
